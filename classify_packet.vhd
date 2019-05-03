@@ -24,6 +24,14 @@ entity classify_packet is
 			  oreadstatus : out STD_LOGIC_VECTOR(3 downto 0); --debug
 			  debug : inout STD_LOGIC_VECTOR(1 downto 0); --debug
 			  hoppointer_o : out STD_LOGIC_VECTOR(1 downto 0); --debug
+			  pkt0_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt1_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt2_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt3_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt4_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug;
+			  ethertype_o : out STD_LOGIC; --debug
+			  ethervalue_o : out STD_LOGIC; --debug
 			  clk : in  STD_LOGIC;
            rst : in  STD_LOGIC);
 end classify_packet;
@@ -48,7 +56,7 @@ signal currack , ready2push : std_logic := '0';
 signal grantport : std_logic_vector(3 downto 0) := "0000";
 
 type arrayofvector is array (0 to 2) of std_logic_vector(3 downto 0);
-signal counter : arrayofvector;    --a counter for each port
+signal counter : arrayofvector := (others=>(others=>'0'));    --a counter for each port
 
 signal allportzero : std_logic_vector(3 downto 0);
 signal ethertype , ethervalue : std_logic;
@@ -56,7 +64,7 @@ signal opcodetmp : std_logic;
 
 signal noofhops, hoppointer : std_logic_vector(1 downto 0);
 signal pathvector : std_logic_vector(17 downto 0);
-signal addlpointer , addrpointer : std_logic_vector(4 downto 0);
+signal addlpointer , addrpointer : integer range 0 to 31;
 signal targetMAC : std_logic;
 signal seloutport : std_logic_vector (1 downto 0);
 
@@ -74,6 +82,14 @@ begin
 		input_port <= grantport;
 		gport <= grantport;
 		hoppointer_o <= hoppointer;
+		ethertype_o <= ethertype;
+		ethervalue_o <= ethervalue;
+		counter_o <= counter(0);
+		pkt0_0 <= pkt0;
+		pkt1_0 <= pkt1;
+		pkt2_0 <= pkt2;
+		pkt3_0 <= pkt3;
+		pkt4_0 <= pkt4;
 		if (nstatus = idle) then
 			ostatus <= "00";
 		elsif (nstatus = iav) then
@@ -154,26 +170,26 @@ arbiter : rrarbiter
 port map (clk => clk,
 			rst_n => rst,
 			req => iData_av,
-			ack => currack,
+			ack => '1',
 			grant => grantport
 );
 
 process(clk)
 begin
 if (rising_edge(clk)) then	
-			if (counter(0) > 0) then                      --counter 0
+			if (counter(0) > "0001") then                      --counter 0
 				counter(0) <= counter(0) - "0001";
 			else
 				counter(0) <= counter(0);
 			end if;
 			
-			if (counter(1) > 0) then                      --counter 1
+			if (counter(1) > "0001") then                      --counter 1
 				counter(1) <= counter(1) - "0001";
 			else
 				counter(1) <= counter(1);
 			end if;
 			
-			if (counter(2) > 0) then                      --counter 2
+			if (counter(2) > "0001") then                      --counter 2
 				counter(2) <= counter(2) - "0001";
 			else
 				counter(2) <= counter(2);
@@ -203,9 +219,9 @@ case nstatus is
 			when r0 =>
 				ethertype <= iData1(2);
 				ethervalue <= iData1(1);
-				opcodetmp <= ethervalue;
+				opcodetmp <= iData1(1);
 				if (opcodetmp = '0') then               --if packet is of type inter-switch
-					if (counter(to_integer(unsigned(grantport))) > 0) then  --timer doesn't time-out
+					if (counter(to_integer(unsigned(grantport))) > "0001" or counter(to_integer(unsigned(grantport))) = "0000") then  --timer doesn't time-out
 						Edge_ports(to_integer(unsigned(grantport))) <= '0';
 						Core_ports(to_integer(unsigned(grantport))) <= '1';
 					else                              --timer times out
@@ -222,13 +238,12 @@ case nstatus is
 				pkt1 <= iData1;
 				--debug <= "11";
 				--debug <= hoppointer;-- + "01";
-				pkt1(3) <= debug(1);
-				pkt1(2) <= debug(0);
 			when r2 =>
 				debug <= hoppointer + "01";
+				pkt1(3) <= debug(1);
+				pkt1(2) <= debug(0);
 				pkt2 <= iData1;
 			when r3 =>
-				ready2push <= '1';
 				pkt3 <= iData1;
 			when r4 =>
 				ready2push <= '1';
@@ -238,10 +253,12 @@ case nstatus is
 				if (hoppointer < noofhops) then
 					--pktaddtmp <= pkt1(3) + '1';  --incrementing path pointer
 					--pkt1(3) <= pktaddtmp(0);
-					addlpointer <= "10010"-(hoppointer&'0');    -- multiplication??????
-					addrpointer <= "10010"-((hoppointer+"01")&'0'); --multiplication??????
-					seloutport <= pathvector(to_integer(unsigned(addlpointer)) downto (to_integer(unsigned(addrpointer))));
+					addlpointer <= to_integer(unsigned("10010"-("00"&hoppointer&'0')));    -- multiplication??????
+					addrpointer <= to_integer(unsigned("10010"-("00"&(hoppointer+"01")&'0'))); --multiplication??????
+					seloutport <= "00";
+					--seloutport <= pathvector(addlpointer downto addrpointer);
 					pkt0(1) <= '1'; --setting opcode
+					Port_mask(0) <= '1';
 					Port_mask(to_integer(unsigned(seloutport))) <= '1';  --setting dest. port
 				else
 					if (targetMAC = MAC) then
@@ -258,7 +275,7 @@ case nstatus is
 				pkt3 <= pkt4;
 				pkt4 <= iData1;
 			when r0out =>
-				--ready2push <= '1';
+				ready2push <= '1';
 				pkt0 <= pkt1;
 				pkt1 <= pkt2;
 				pkt2 <= pkt3;
@@ -286,7 +303,7 @@ case ready2push is	               --debug purpose
 end case;
 
 case Rd_opcode is                   -- reading our opcode from remote logic
-	when '0' => Opcode <= '0';
+	when '0' => Opcode <= opcodetmp;
 	when '1' => Opcode <= opcodetmp;
 	when others =>
 end case;
