@@ -4,7 +4,7 @@ USE ieee.std_logic_1164.ALL;
 ENTITY classify_tb IS
 END classify_tb;
  
-ARCHITECTURE behavior OF classify_tb IS 
+ARCHITECTURE behavior OF classify_tb IS  
  
     COMPONENT classify_packet
     PORT(
@@ -28,6 +28,14 @@ ARCHITECTURE behavior OF classify_tb IS
 			  oreadstatus : out STD_LOGIC_VECTOR(3 downto 0); --debug
 			  debug : inout STD_LOGIC_VECTOR(1 downto 0); --debug
 			  hoppointer_o : out STD_LOGIC_VECTOR(1 downto 0); --debug
+			  pkt0_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt1_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt2_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt3_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  pkt4_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
+			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug;
+			  ethertype_o : out STD_LOGIC; --debug
+			  ethervalue_o : out STD_LOGIC; --debug
            clk : in  STD_LOGIC;
            rst : in  STD_LOGIC
         );
@@ -59,6 +67,14 @@ ARCHITECTURE behavior OF classify_tb IS
 	signal oreadstatus : STD_LOGIC_VECTOR(3 downto 0); --debug
 	signal debug : STD_LOGIC_VECTOR(1 downto 0); --debug
 	signal hoppointer_o : STD_LOGIC_VECTOR(1 downto 0); --debug
+	signal pkt0_0 : STD_LOGIC_VECTOR(5 downto 0);  --debug
+	signal pkt1_0 : STD_LOGIC_VECTOR(5 downto 0);  --debug
+	signal pkt2_0 : STD_LOGIC_VECTOR(5 downto 0);  --debug
+	signal pkt3_0 : STD_LOGIC_VECTOR(5 downto 0);  --debug
+	signal pkt4_0 : STD_LOGIC_VECTOR(5 downto 0);  --debug
+	signal counter_o : STD_LOGIC_VECTOR(3 downto 0); --debug;
+	signal ethertype_o : STD_LOGIC; --debug
+	signal ethervalue_o : STD_LOGIC; --debug
 
    -- Clock period definitions
    constant clk_period : time := 100 ns;
@@ -87,6 +103,14 @@ BEGIN
 			 oreadstatus => oreadstatus, --debug
 			 debug => debug, --debug
 			 hoppointer_o => hoppointer_o, --debug
+			 pkt0_0 => pkt0_0, --debug
+			 pkt1_0 => pkt1_0, --debug
+			 pkt2_0 => pkt2_0, --debug
+			 pkt3_0 => pkt3_0, --debug
+			 pkt4_0 => pkt4_0, --debug
+			 counter_o => counter_o, --debug
+			 ethertype_o => ethertype_o,  --debug
+			 ethervalue_o => ethervalue_o,  --debug
           clk => clk,
           rst => rst
         );
@@ -117,18 +141,28 @@ BEGIN
 		 rst <= '0';
 		 wait for clk_period;
 		 
-		 iData_av <= "0000";
-		 iData1 <= "110011";
+		 iData_av <= "0001";
+		 iData1 <= "000000";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
-		 valid <= '1';
+		 valid <= '0';
 		 MAC <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
 		 
-		 iData_av <= "0000";
-		 iData1 <= "110111";
+		 iData_av <= "0001";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0001";
+		 iData1 <= "100000";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
 		 valid <='1';
@@ -138,7 +172,17 @@ BEGIN
 		 wait for clk_period;
 		 
 		 iData_av <= "0000";
-		 iData1 <= "111011";
+		 iData1 <= "010000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '1';
+		 Rd_opcode <= '1';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "001000";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
 		 valid <= '1';
@@ -148,7 +192,7 @@ BEGIN
 		 wait for clk_period;
 		 
 		 iData_av <= "0000";
-		 iData1 <= "110111";
+		 iData1 <= "000100";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
 		 valid <= '1';
@@ -158,7 +202,7 @@ BEGIN
 		 wait for clk_period;
 		 
 		 iData_av <= "0000";
-		 iData1 <= "111011";
+		 iData1 <= "000010";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
 		 valid <= '1';
@@ -168,20 +212,10 @@ BEGIN
 		 wait for clk_period;
 		 
 		 iData_av <= "0000";
-		 iData1 <= "000000";
+		 iData1 <= "000001";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
-		 valid <= '0';
-		 MAC <= '1';
-		 Rd_opcode <= '0';
-		 rst <= '0';
-		 wait for clk_period;
-		 
-		 iData_av <= "0000";
-		 iData1 <= "000000";
-		 iData2 <= "000000";
-		 iData3 <= "000000";
-		 valid <= '0';
+		 valid <= '1';
 		 MAC <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
@@ -195,47 +229,7 @@ BEGIN
 		 MAC <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
-		 wait for clk_period;
-		 
-		 iData_av <= "0000";
-		 iData1 <= "000000";
-		 iData2 <= "000000";
-		 iData3 <= "000000";
-		 valid <= '0';
-		 MAC <= '0';
-		 Rd_opcode <= '0';
-		 rst <= '0';
-		 wait for clk_period;
-		 
-		 iData_av <= "0000";
-		 iData1 <= "000000";
-		 iData2 <= "000000";
-		 iData3 <= "000000";
-		 valid <= '0';
-		 MAC <= '0';
-		 Rd_opcode <= '0';
-		 rst <= '0';
-		 wait for clk_period;
-		 
-		 iData_av <= "0000";
-		 iData1 <= "000000";
-		 iData2 <= "000000";
-		 iData3 <= "000000";
-		 valid <= '0';
-		 MAC <= '0';
-		 Rd_opcode <= '0';
-		 rst <= '0';
-		 wait for clk_period;
-		 
-		 iData_av <= "0000";
-		 iData1 <= "000000";
-		 iData2 <= "000000";
-		 iData3 <= "000000";
-		 valid <= '0';
-		 MAC <= '0';
-		 Rd_opcode <= '0';
-		 rst <= '0';
-		 wait for clk_period*50;
+		 wait for clk_period*80;
 		 
       wait;
    end process;
