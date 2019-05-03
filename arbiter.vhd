@@ -1,35 +1,36 @@
 library ieee;
  use ieee.std_logic_1164.all;
  use ieee.numeric_std.all;
-
+ use ieee.std_logic_unsigned.all;
 
  entity rrarbiter is
- generic ( CNT : integer := 3 );
  port (
  clk   : in std_logic;
  rst_n : in std_logic;
- req   : in std_logic_vector(CNT-1 downto 0);
+
+
+ req   : in std_logic_vector(3 downto 0);
  ack   : in std_logic;
- grant : out std_logic_vector(CNT-1 downto 0)
+ grant : out   std_logic_vector(3 downto 0)
  );
- end rrarbiter;
+ end;
 
 
- architecture rtl of rrarbiter is
- signal grant_q  : std_logic_vector(CNT-1 downto 0);
- signal pre_req  : std_logic_vector(CNT-1 downto 0);
- signal sel_gnt  : std_logic_vector(CNT-1 downto 0);
- signal isol_lsb : std_logic_vector(CNT-1 downto 0);
- signal mask_pre : std_logic_vector(CNT-1 downto 0);
- signal win   : std_logic_vector(CNT-1 downto 0);
+ architecture rrarbiter of rrarbiter is
+ signal grant_q  : std_logic_vector(3 downto 0):="0000";
+ signal pre_req  : std_logic_vector(3 downto 0):="0000";
+ signal sel_gnt  : std_logic_vector(3 downto 0):="0000";
+ signal isol_lsb : std_logic_vector(3 downto 0):="0000";
+ signal mask_pre : std_logic_vector(3 downto 0):="1111";
+ signal win   : std_logic_vector(3 downto 0):="0000";
 
-begin
+Begin
 
  grant <= grant_q;
  mask_pre <=   req and not (std_logic_vector(unsigned(pre_req) - 1) or pre_req); -- Mask off previous winners
  sel_gnt  <= mask_pre and   std_logic_vector(unsigned(not(mask_pre)) + 1);    -- Select new winner
  isol_lsb <=   req and   std_logic_vector(unsigned(not(req)) + 1);   -- Isolate least significant set bit.
- win   <= sel_gnt when mask_pre /= (CNT-1 downto 0 => '0') else isol_lsb;
+ win   <= sel_gnt when mask_pre /= (3 downto 0 => '0') else isol_lsb;
 
 
  process (clk, rst_n)
@@ -43,9 +44,9 @@ begin
       pre_req <= pre_req;
 
 
-      if grant_q = (CNT-1 downto 0 => '0') or ack = '1' then
+      if grant_q = (3 downto 0 => '0') or ack = '1' then
 
-          if win /= (CNT-1 downto 0 => '0') then
+          if win /= (3 downto 0 => '0') then
                  pre_req <= win;
           end if;
 
@@ -53,4 +54,4 @@ begin
          end if;
   end if;
  end process;
-end rtl;
+end rrarbiter;
