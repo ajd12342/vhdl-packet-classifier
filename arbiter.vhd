@@ -34,7 +34,7 @@ begin
 
  process (clk, rst_n)
  begin
-  if rst_n = '0' then
+  if rst_n = '1' then
       pre_req <= (others => '0');
       grant_q <= (others => '0');
 
