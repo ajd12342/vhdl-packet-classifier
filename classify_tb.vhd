@@ -14,6 +14,7 @@ ARCHITECTURE behavior OF classify_tb IS
            iData2 : in  STD_LOGIC_VECTOR (5 downto 0);
            iData3 : in  STD_LOGIC_VECTOR (5 downto 0);  
            oData_av : out  STD_LOGIC;
+			  oData_rd : in STD_LOGIC;
            oData : out  STD_LOGIC_VECTOR (5 downto 0);
            MAC : in  STD_LOGIC;
 			  valid : in STD_LOGIC;	
@@ -56,6 +57,7 @@ ARCHITECTURE behavior OF classify_tb IS
    signal Rd_opcode : std_logic := '0';
    signal clk : std_logic := '0';
    signal rst : std_logic := '0';
+	signal oData_rd : STD_LOGIC;
 
  	--Outputs
    signal iRd_Data : std_logic_vector(3 downto 0);
@@ -97,6 +99,7 @@ BEGIN
           iData2 => iData2,
           iData3 => iData3,
           oData_av => oData_av,
+			 oData_rd => oData_rd,
           oData => oData,
           MAC => MAC,
 			 valid => valid,
@@ -143,12 +146,37 @@ BEGIN
       -- hold reset state for 100 ns.
 
       -- insert stimulus here 
+		
+		 iData_av <= "0000";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '1';
+		 oData_rd <= '0';
+		 Rd_opcode <= '0';
+		 rst <= '1';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '1';
+		 oData_rd <= '0';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period*5;
+		 
+		 
 		 iData_av <= "0001";
 		 iData1 <= "000000";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -159,6 +187,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -169,6 +198,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -179,6 +209,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <='1';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -189,6 +220,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '1';
 		 rst <= '0';
 		 wait for clk_period;
@@ -199,6 +231,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -209,6 +242,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -219,6 +253,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -229,6 +264,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '0';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -239,6 +275,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '0';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period*8;
@@ -249,6 +286,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -259,6 +297,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -269,6 +308,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -279,6 +319,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <='1';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -289,6 +330,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '1';
 		 rst <= '0';
 		 wait for clk_period;
@@ -299,6 +341,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -309,6 +352,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '1';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -319,6 +363,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '1';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -329,6 +374,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '0';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -339,6 +385,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '0';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -349,6 +396,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '1';
 		 MAC <= '0';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period;
@@ -359,6 +407,7 @@ BEGIN
 		 iData3 <= "000000";
 		 valid <= '0';
 		 MAC <= '0';
+		 oData_rd <= '0';
 		 Rd_opcode <= '0';
 		 rst <= '0';
 		 wait for clk_period*80;
