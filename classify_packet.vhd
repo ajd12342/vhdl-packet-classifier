@@ -1,6 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.math_real.all;
 USE ieee.numeric_std.ALL; 
 
 entity classify_packet is
@@ -10,7 +11,8 @@ entity classify_packet is
            iData2 : in  STD_LOGIC_VECTOR (5 downto 0);
            iData3 : in  STD_LOGIC_VECTOR (5 downto 0);
            oData_av : out  STD_LOGIC;
-           oData : out  STD_LOGIC_VECTOR (5 downto 0);
+			  oData_rd : in STD_LOGIC;
+           oData : out  STD_LOGIC_VECTOR (5 downto 0); 
            MAC : in  STD_LOGIC;
 			  valid : in STD_LOGIC;
            Opcode : out  STD_LOGIC;
@@ -29,34 +31,55 @@ entity classify_packet is
 			  pkt2_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
 			  pkt3_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
 			  pkt4_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
-			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug;
+			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug
 			  ethertype_o : out STD_LOGIC; --debug
 			  ethervalue_o : out STD_LOGIC; --debug
+			  counter_index : out integer range 0 to 15 := 5; --debug
+			  grantportint_o : out integer range 1 to 4;   --debug
+			  addlpointer_o : out integer range 1 to 4;   --debug
+			  addrpointer_o : out integer range 1 to 4;   --debug
 			  clk : in  STD_LOGIC;
            rst : in  STD_LOGIC);
 end classify_packet;
 
 architecture Behavioral of classify_packet is
 component rrarbiter is
-generic ( CNT : integer := 4 );
+--generic ( CNT : integer := 4 );
  port (
  clk   : in std_logic;
  rst_n : in std_logic;
- req   : in std_logic_vector(CNT-1 downto 0);
+ req   : in std_logic_vector(3 downto 0);
  ack   : in std_logic;
- grant : out   std_logic_vector(CNT-1 downto 0)
+ grant : out   std_logic_vector(3 downto 0)
  );
  end component;
+ 
+COMPONENT FIFO
+  PORT (
+    rst : IN STD_LOGIC;
+    wr_clk : IN STD_LOGIC;
+    rd_clk : IN STD_LOGIC;
+    din : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
+    wr_en : IN STD_LOGIC;
+    rd_en : IN STD_LOGIC;
+    dout : OUT STD_LOGIC_VECTOR(5 DOWNTO 0);
+    full : OUT STD_LOGIC;
+    empty : OUT STD_LOGIC;
+    rd_data_count : OUT STD_LOGIC_VECTOR(9 DOWNTO 0);
+    wr_data_count : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
+  );
+END COMPONENT;
 
 type overallstatus is (idle,iav,oav,reading);
 signal pstatus , nstatus : overallstatus := idle;
-type status is (r0,r1,r2,r3,r4,rcont,r0out,r1out,r2out,r3out,r4out,rover);
+type status is (r0,r1,r2,r3,r4,rcont,r0out,r1out,r2out,r3out,r4out,rjustover,rover);
 signal preadstatus , nreadstatus : status := r0;
 signal currack , ready2push : std_logic := '0';
-signal grantport : std_logic_vector(3 downto 0) := "0000";
+signal grantport : std_logic_vector(3 downto 0) := "0001";
+signal grantportint : integer range 0 to 15;
 
 type arrayofvector is array (0 to 2) of std_logic_vector(3 downto 0);
-signal counter : arrayofvector := (others=>(others=>'0'));    --a counter for each port
+signal counter : arrayofvector := (others => (others => '0'));    --a counter for each port
 
 signal allportzero : std_logic_vector(3 downto 0);
 signal ethertype , ethervalue : std_logic;
@@ -85,6 +108,9 @@ begin
 		ethertype_o <= ethertype;
 		ethervalue_o <= ethervalue;
 		counter_o <= counter(0);
+		grantportint_o <= grantportint;
+		addlpointer_o <= addlpointer;
+		addrpointer_o <= addrpointer;
 		pkt0_0 <= pkt0;
 		pkt1_0 <= pkt1;
 		pkt2_0 <= pkt2;
@@ -122,8 +148,10 @@ begin
 			oreadstatus <= "1001";
 		elsif (nreadstatus = r4out) then
 			oreadstatus <= "1010";
-		else
+		elsif (nreadstatus = rjustover) then
 			oreadstatus <= "1011";
+		else 
+			oreadstatus <= "1100";
 		end if;
 	end if;
 end process;
@@ -135,7 +163,7 @@ process(clk)
 			case nstatus is
 				when idle => 
 					case iData_av is                        --check if data available
-						when "0000" => nstatus <= pstatus;
+						when "0000" => nstatus <= idle;
 						when others => nstatus <= iav;
 					end case;
 					
@@ -157,9 +185,11 @@ process(clk)
 						when r0out => nreadstatus <= r1out;
 						when r1out => nreadstatus <= r2out;
 						when r2out => nreadstatus <= r3out;
-						when r3out => nreadstatus <= rover;
+						when r3out => nreadstatus <= rjustover;
+						when rjustover => nreadstatus <= rover; 
 						when rover => nreadstatus <= r0;          --read over
 										  nstatus <= idle;
+										  --ready2push <= '0';
 						when others => 
 					end case;
 			end case;
@@ -170,7 +200,7 @@ arbiter : rrarbiter
 port map (clk => clk,
 			rst_n => rst,
 			req => iData_av,
-			ack => '1',
+			ack => currack,
 			grant => grantport
 );
 
@@ -195,9 +225,27 @@ if (rising_edge(clk)) then
 				counter(2) <= counter(2);
 			end if;	
 			
+			if (counter(0) = "0001") then                             --timer times out
+					Edge_ports(0) <= '1';
+					Core_ports(0) <= '0';
+					--counter(0) <= "1111";
+			end if;
+			
+			if (counter(1) = "0001") then                             --timer times out
+					Edge_ports(1) <= '1';
+					Core_ports(1) <= '0';
+					--counter(1) <= "1111";
+			end if;
+			
+			if (counter(2) = "0001") then                             --timer times out
+					Edge_ports(2) <= '1';
+					Core_ports(2) <= '0';
+					--counter(2) <= "1111";
+			end if;
+			
 case nstatus is
 	when idle => case Core_ports is
-						when "UUUU" => Core_ports <= "0000";
+						when "UUUU" => Core_ports <= "1111";
 						when others => 
 					end case;
 					
@@ -205,9 +253,10 @@ case nstatus is
 						when "UUUU" => Edge_ports <= "0000";
 						when others => 
 					end case;
-					
+					 
 					port_mask <= "0000";
 					debug <= "00";
+					--currack <= '1';
 					--input_port <= "0000"; 
 	
 	when iav => currack <= '1';
@@ -220,43 +269,51 @@ case nstatus is
 				ethertype <= iData1(2);
 				ethervalue <= iData1(1);
 				opcodetmp <= iData1(1);
-				if (opcodetmp = '0') then               --if packet is of type inter-switch
-					if (counter(to_integer(unsigned(grantport))) > "0001" or counter(to_integer(unsigned(grantport))) = "0000") then  --timer doesn't time-out
-						Edge_ports(to_integer(unsigned(grantport))) <= '0';
-						Core_ports(to_integer(unsigned(grantport))) <= '1';
-					else                              --timer times out
-						Edge_ports(to_integer(unsigned(grantport))) <= '1';
-						Core_ports(to_integer(unsigned(grantport))) <= '0';
-					end if;
-					counter(to_integer(unsigned(grantport))) <= "1111";
-				end if;
+				
+				counter_index <= to_integer(unsigned(grantport));
+				grantportint <= integer(log2(real(to_integer(unsigned(grantport)))));
+				
+				
 				pkt0 <= iData1;
 			when r1 =>
 				noofhops <= iData1(5 downto 4);
 				hoppointer <= iData1(3 downto 2);
 				--hoppointer_o <= hoppointer;
+				
+				if (opcodetmp = '0' and ((counter(grantportint)) > "0001" or counter(grantportint) = "0000")) then  --timer doesn't time-out
+					Edge_ports(grantportint) <= '0';
+					Core_ports(grantportint) <= '1';
+					counter(grantportint) <= "1111";
+				end if;
+				
 				pkt1 <= iData1;
 				--debug <= "11";
-				--debug <= hoppointer;-- + "01";
+				--debug <= hoppointer;-- + "01";               --if packet is of type inter-switch
 			when r2 =>
-				debug <= hoppointer + "01";
-				pkt1(3) <= debug(1);
-				pkt1(2) <= debug(0);
 				pkt2 <= iData1;
+				debug <= hoppointer + "01";
+				--pkt1(3) <= debug(1);
+				--pkt1(2) <= debug(0);
 			when r3 =>
 				pkt3 <= iData1;
+				pkt1(3) <= debug(1);
+				pkt1(2) <= debug(0);
 			when r4 =>
 				ready2push <= '1';
+				--pkt1(3) <= debug(1);
+				--pkt1(2) <= debug(0);
 				targetMAC <= iData1(1);
-				pathvector <= pkt1(1 downto 0) & pkt2 & pkt3 & iData1(5 downto 2);
+				pathvector <= "101010101010101010";
+				--pathvector <= pkt1(1 downto 0) & pkt2 & pkt3 & iData1(5 downto 2);
 				pkt4 <= iData1;
 				if (hoppointer < noofhops) then
 					--pktaddtmp <= pkt1(3) + '1';  --incrementing path pointer
 					--pkt1(3) <= pktaddtmp(0);
-					addlpointer <= to_integer(unsigned("10010"-("00"&hoppointer&'0')));    -- multiplication??????
-					addrpointer <= to_integer(unsigned("10010"-("00"&(hoppointer+"01")&'0'))); --multiplication??????
-					seloutport <= "00";
-					--seloutport <= pathvector(addlpointer downto addrpointer);
+					addlpointer <= to_integer(unsigned("10001"-("00"&hoppointer&'0')));    -- multiplication??????
+					addrpointer <= to_integer(unsigned("10001"-(("00"&(hoppointer+"01")&'0')-"00001"))); --multiplication??????
+					--seloutport <= "00";
+					seloutport(1) <= pathvector(addrpointer+1);
+					seloutport(0) <= pathvector(addrpointer);
 					pkt0(1) <= '1'; --setting opcode
 					Port_mask(0) <= '1';
 					Port_mask(to_integer(unsigned(seloutport))) <= '1';  --setting dest. port
@@ -289,18 +346,21 @@ case nstatus is
 				pkt1 <= pkt2;
 			when r3out =>
 				pkt0 <= pkt1;
+			when rjustover =>
+				pkt0 <= "000000";
 			when rover =>
 				oData_av <= '1';
 				currack <= '0';
+				ready2push <= '0';
 			when others => 
 		end case;
 end case;
 
-case ready2push is	               --debug purpose			
-	when '0' => oData <= "000000";
-	when '1' => oData <= pkt0;
-	when others =>
-end case;
+--case ready2push is	               --debug purpose			
+--	when '0' => oData <= "000000";
+--	when '1' => oData <= pkt0; 
+--	when others =>
+--end case; 
 
 case Rd_opcode is                   -- reading our opcode from remote logic
 	when '0' => Opcode <= opcodetmp;
@@ -310,5 +370,20 @@ end case;
 end if;
 end process;
 
+classify_fifo : FIFO
+  PORT MAP (
+    rst => rst,
+    wr_clk => clk,
+    rd_clk => clk,
+    din => pkt0,
+    wr_en => ready2push,
+    rd_en => oData_rd,
+    dout => oData,
+    full => open,
+    empty => open,
+    rd_data_count => open,
+    wr_data_count => open
+  );
+  
 end Behavioral;
 
