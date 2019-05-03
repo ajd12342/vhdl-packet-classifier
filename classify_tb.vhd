@@ -2,23 +2,23 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
  
 ENTITY classify_tb IS
-END classify_tb;
+END classify_tb; 
  
 ARCHITECTURE behavior OF classify_tb IS  
  
-    COMPONENT classify_packet
+    COMPONENT classify_packet 
     PORT(
 			  iData_av : in  STD_LOGIC_VECTOR (3 downto 0);
            iRd_Data : out  STD_LOGIC_VECTOR (3 downto 0);
            iData1 : in  STD_LOGIC_VECTOR (5 downto 0);
            iData2 : in  STD_LOGIC_VECTOR (5 downto 0);
-           iData3 : in  STD_LOGIC_VECTOR (5 downto 0);
+           iData3 : in  STD_LOGIC_VECTOR (5 downto 0);  
            oData_av : out  STD_LOGIC;
            oData : out  STD_LOGIC_VECTOR (5 downto 0);
            MAC : in  STD_LOGIC;
 			  valid : in STD_LOGIC;	
            Opcode : out  STD_LOGIC;
-           Rd_opcode : in  STD_LOGIC;
+           Rd_opcode : in  STD_LOGIC; 
            Input_port : out  STD_LOGIC_VECTOR (3 downto 0);
            Port_mask : out  STD_LOGIC_VECTOR (3 downto 0);
            Edge_ports : inout  STD_LOGIC_VECTOR (3 downto 0);
@@ -33,9 +33,13 @@ ARCHITECTURE behavior OF classify_tb IS
 			  pkt2_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
 			  pkt3_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
 			  pkt4_0 : out STD_LOGIC_VECTOR(5 downto 0);  --debug
-			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug;
+			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug
 			  ethertype_o : out STD_LOGIC; --debug
 			  ethervalue_o : out STD_LOGIC; --debug
+			  counter_index : out integer range 0 to 15; --debug
+			  grantportint_o : out integer range 1 to 4;   --debug
+			  addlpointer_o : out integer range 1 to 4;   --debug
+			  addrpointer_o : out integer range 1 to 4;   --debug
            clk : in  STD_LOGIC;
            rst : in  STD_LOGIC
         );
@@ -75,6 +79,10 @@ ARCHITECTURE behavior OF classify_tb IS
 	signal counter_o : STD_LOGIC_VECTOR(3 downto 0); --debug;
 	signal ethertype_o : STD_LOGIC; --debug
 	signal ethervalue_o : STD_LOGIC; --debug
+	signal counter_index : integer range 0 to 15; --debug
+	signal grantportint_o : integer range 1 to 4;   --debug
+	signal addlpointer_o : integer range 1 to 4;   --debug
+	signal addrpointer_o : integer range 1 to 4;   --debug
 
    -- Clock period definitions
    constant clk_period : time := 100 ns;
@@ -111,6 +119,10 @@ BEGIN
 			 counter_o => counter_o, --debug
 			 ethertype_o => ethertype_o,  --debug
 			 ethervalue_o => ethervalue_o,  --debug
+			 counter_index => counter_index,  --debug
+			 grantportint_o => grantportint_o,  --debug
+			 addlpointer_o => addlpointer_o, --debug
+			 addrpointer_o => addrpointer_o,  --debug
           clk => clk,
           rst => rst
         );
@@ -213,6 +225,126 @@ BEGIN
 		 
 		 iData_av <= "0000";
 		 iData1 <= "000001";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '0';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '0';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period*8;
+		 
+		 iData_av <= "0100";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0100";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "000000";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '0';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111101";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <='1';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111011";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '1';
+		 Rd_opcode <= '1';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111111";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111111";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111111";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '1';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111111";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '0';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "111111";
+		 iData2 <= "000000";
+		 iData3 <= "000000";
+		 valid <= '1';
+		 MAC <= '0';
+		 Rd_opcode <= '0';
+		 rst <= '0';
+		 wait for clk_period;
+		 
+		 iData_av <= "0000";
+		 iData1 <= "101010";
 		 iData2 <= "000000";
 		 iData3 <= "000000";
 		 valid <= '1';
