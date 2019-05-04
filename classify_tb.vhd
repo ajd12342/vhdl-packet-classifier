@@ -97,7 +97,7 @@ ARCHITECTURE behavior OF classify_tb IS
          pkt2_0 : OUT  std_logic_vector(144 downto 0);
          pkt3_0 : OUT  std_logic_vector(144 downto 0);
          pkt4_0 : OUT  std_logic_vector(144 downto 0);
-         counter_o : OUT  std_logic_vector(3 downto 0);
+         counter_o : OUT  std_logic_vector(23 downto 0);
          ethertype_o : OUT  std_logic_vector(15 downto 0);
          ethervalue_o : OUT  std_logic_vector(15 downto 0);
          counter_index : OUT  integer range 0 to 15;
@@ -176,7 +176,7 @@ ARCHITECTURE behavior OF classify_tb IS
    signal pkt2_0 : std_logic_vector(144 downto 0);
    signal pkt3_0 : std_logic_vector(144 downto 0);
    signal pkt4_0 : std_logic_vector(144 downto 0);
-   signal counter_o : std_logic_vector(3 downto 0);
+   signal counter_o : std_logic_vector(23 downto 0);
    signal ethertype_o : std_logic_vector(15 downto 0);
    signal ethervalue_o : std_logic_vector(15 downto 0);
    signal counter_index : integer range 0 to 15;

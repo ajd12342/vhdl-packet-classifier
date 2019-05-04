@@ -61,7 +61,7 @@ entity classify_packet is
 			  pkt2_0 : out STD_LOGIC_VECTOR(144 downto 0);  --debug
 			  pkt3_0 : out STD_LOGIC_VECTOR(144 downto 0);  --debug
 			  pkt4_0 : out STD_LOGIC_VECTOR(144 downto 0);  --debug
-			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug
+			  counter_o : out STD_LOGIC_VECTOR(23 downto 0); --debug
 			  ethertype_o : out STD_LOGIC_vector(15 downto 0); --debug
 			  ethervalue_o : out STD_LOGIC_vector(15 downto 0); --debug
 			  counter_index : out integer range 0 to 15 := 0; --debug
@@ -115,7 +115,7 @@ signal ready2push : std_logic := '0';
 signal grantport : std_logic_vector(31 downto 0) := (others => '0');
 signal grantportint : integer range 0 to 31;
 
-type arrayofvector is array (0 to 31) of std_logic_vector(3 downto 0);
+type arrayofvector is array (0 to 31) of std_logic_vector(23 downto 0);
 signal counter : arrayofvector := (others => (others => '0'));    --a counter for each port
 
 signal allportzero : std_logic_vector(31 downto 0);
@@ -335,13 +335,13 @@ process(rst,clk)
 begin
 if (rising_edge(clk)) then	
 			for i in counter' range loop
-				if (counter(i) > "0001") then                      --counter 0
-					counter(i) <= counter(i) - "0001";
+				if (counter(i) > "000000000000000000000001") then                      --counter 0
+					counter(i) <= counter(i) - "000000000000000000000001";
 				else
 					counter(i) <= counter(i);
 				end if;
 			
-				if (counter(i) = "0001") then                             --timer times out
+				if (counter(i) = "000000000000000000000001") then                             --timer times out
 						Edge_ports(i) <= '1';
 						Core_ports(i) <= '0';
 						--counter(i) <= "1111";
@@ -399,12 +399,12 @@ case nstatus is
 				--hoppointer_o <= hoppointer;
 				
 				if (opcodetmp = "00000001" and 
-				((counter(grantportint)) > "0001" 
-				or counter(grantportint) = "0000"))
+				((counter(grantportint)) > "000000000000000000000001" 
+				or counter(grantportint) = "000000000000000000000000"))
 				then  --timer doesn't time-out
 					Edge_ports(grantportint) <= '0';
 					Core_ports(grantportint) <= '1';
-					counter(grantportint) <= "1111";
+					counter(grantportint) <= "100110001001011010000001"; --10**7+1
 				end if;
 				
 				pkt1 <= '1'&iData(grantportint);
