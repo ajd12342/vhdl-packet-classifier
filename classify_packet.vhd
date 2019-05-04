@@ -109,7 +109,7 @@ signal iData : arrayofinput := (others => (others => '0'));
 signal odatanew: std_logic_vector(144 downto 0);
 type overallstatus is (idle,iav,oav,reading);
 signal pstatus , nstatus : overallstatus := idle;
-type status is (r0,r1,r2,r3,r4,rcont,r0out,r1out,r2out,r3out,r4out,rjustover,rover);
+type status is (r0,r1,r2,r3,r4,rinter,rcont,r0out,r1out,r2out,r3out,r4out,rjustover,rover);
 signal preadstatus , nreadstatus : status := r0;
 type outstatus is (idle, waiting, outputting);
 signal noutstatus: outstatus :=idle;
@@ -131,7 +131,7 @@ signal pathvector : std_logic_vector(479 downto 0);
 signal addlpointer , addrpointer : integer range 0 to 479;
 signal targetMAC : std_logic_vector(47 downto 0);
 signal seloutport : std_logic_vector (4 downto 0);
-
+signal pvalid_in : std_logic;
 signal dropped : std_logic;
 signal ready2pushmodified: std_logic;
 signal isempty: std_logic;
@@ -228,6 +228,7 @@ begin
 		preadstatus <= nreadstatus;
 		input_port <= std_logic_vector(to_unsigned(grantportint,5));
 		gport <= grantport;
+		pvalid_in<=valid_in;
 		hoppointer_o <= hoppointer;
 		ethertype_o <= ethertype;
 		ethervalue_o <= ethervalue;
@@ -296,19 +297,20 @@ process(rst,clk)
 				when iav => nstatus <= oav;
 				when oav => 
 					nstatus <= reading;
-					nreadstatus <= r0;
+					nreadstatus <= rinter;
 				when reading =>
 					case nreadstatus is
-						when r0 => 
+						when rinter => 
 							if(valid_in='1') then 
-								nreadstatus <= r1;
+								nreadstatus <= r0;
 							end if;
+						when r0 => nreadstatus <= r1;
 						when r1 => nreadstatus <= r2;
 						when r2 => nreadstatus <= r3;
 						when r3 => nreadstatus <= r4;
 						when r4 => nreadstatus <= rcont; 
 						when rcont => 
-							case valid_in is                          --if still data exists
+							case pvalid_in is                          --if still data exists
 								when '1' => nreadstatus <= rcont;
 								when '0' => nreadstatus <= r0out;
 								when others => 
@@ -395,8 +397,6 @@ case nstatus is
 				ethertype <= iData(grantportint)(47 downto 32);
 				ethervalue <= iData(grantportint)(31 downto 16);
 				opcodetmp <= iData(grantportint)(23 downto 16);
-				
-				
 				pkt0 <= '1'&iData(grantportint);
 			when r1 =>
 				noofhops <= iData(grantportint)(143 downto 128);
@@ -461,9 +461,10 @@ case nstatus is
 				pkt1 <= pkt2;
 				pkt2 <= pkt3;
 				pkt3 <= pkt4;
-				pkt4 <= '1'&iData(grantportint);
+				pkt4 <= pvalid_in&iData(grantportint);
 			when r0out =>
 				--ready2push <= '1';
+				iRd_Data <= "00000000000000000000000000000000";
 				pkt0 <= pkt1;
 				pkt1 <= pkt2;
 				pkt2 <= pkt3;
@@ -478,7 +479,7 @@ case nstatus is
 			when r3out =>
 				pkt0 <= pkt1;
 			when rjustover =>
-				pkt0 <= "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+				--pkt0 <= "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 			when rover =>
 				currack <= '1';
 				ready2push <= '0';
