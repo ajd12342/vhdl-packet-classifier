@@ -99,6 +99,7 @@ COMPONENT FIFO
     full : OUT STD_LOGIC;
 	 prog_full: OUT STD_LOGIC;
     empty : OUT STD_LOGIC;
+	 valid : OUT STD_LOGIC;
     rd_data_count : OUT STD_LOGIC_VECTOR(9 DOWNTO 0);
     wr_data_count : OUT STD_LOGIC_VECTOR(9 DOWNTO 0)
   );
@@ -110,6 +111,8 @@ type overallstatus is (idle,iav,oav,reading);
 signal pstatus , nstatus : overallstatus := idle;
 type status is (r0,r1,r2,r3,r4,rcont,r0out,r1out,r2out,r3out,r4out,rjustover,rover);
 signal preadstatus , nreadstatus : status := r0;
+type outstatus is (idle, waiting, outputting);
+signal noutstatus: outstatus :=idle;
 signal currack :  std_logic := '1';
 signal ready2push : std_logic := '0';
 signal grantport : std_logic_vector(31 downto 0) := (others => '0');
@@ -134,6 +137,8 @@ signal ready2pushmodified: std_logic;
 signal isempty: std_logic;
 signal isfull: std_logic;
 signal arbitrst: std_logic;
+signal rd: std_logic;
+signal validfifo: std_logic;
 signal pkt0,pkt1,pkt2,pkt3,pkt4 : std_logic_vector(144 downto 0);
 --signal pktaddtmp : std_logic_vector(4 downto 0);
 
@@ -473,7 +478,7 @@ case nstatus is
 			when r3out =>
 				pkt0 <= pkt1;
 			when rjustover =>
-				pkt0 <= '0'&"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+				pkt0 <= "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 			when rover =>
 				currack <= '1';
 				ready2push <= '0';
@@ -513,14 +518,48 @@ classify_fifo : FIFO
     rd_clk => clk,
     din => pkt0,
     wr_en => ready2pushmodified,--modified,
-    rd_en => oData_rd,
+    rd_en => rd,
     dout => oDatanew,
     full => open,
 	 prog_full => isfull,
+	 valid => validfifo,
     empty => isempty,
     rd_data_count => open,
     wr_data_count => open
   );
-  
+process(clk)
+begin
+if(rising_edge(clk)) then
+case noutstatus is
+	when idle =>
+	rd<='0';
+	if(isempty='1' or oData_rd='0') then
+		noutstatus<=idle;
+	else
+		noutstatus<=waiting;
+		rd<='1';
+	end if;
+	when waiting =>
+	rd<='1';
+	if(validfifo='0') then
+		noutstatus<=waiting;
+	else
+		noutstatus<=outputting;
+		if(oDatanew(144)='0') then
+			noutstatus<=idle;
+			rd<='0';
+		end if;
+	end if;
+	when outputting =>
+	rd<='1';
+	if(oDatanew(144)='0') then
+		noutstatus<=idle;
+		rd<='0';
+	else
+		noutstatus<=outputting;
+	end if;
+	end case;
+end if;  
+end process;
 end Behavioral;
 
