@@ -16,7 +16,7 @@ entity classify_packet is
 			  valid_out : out std_logic;
            Opcode : out  STD_LOGIC_vector(2 downto 0);
            Rd_opcode : in  STD_LOGIC;
-           Input_port : out  STD_LOGIC_VECTOR (31 downto 0);
+           Input_port : out  STD_LOGIC_VECTOR (4 downto 0);
            Port_mask : out  STD_LOGIC_VECTOR (31 downto 0);
            Edge_ports : inout  STD_LOGIC_VECTOR (31 downto 0);
            Core_Ports : inout  STD_LOGIC_VECTOR (31 downto 0);
@@ -31,8 +31,8 @@ entity classify_packet is
 			  pkt3_0 : out STD_LOGIC_VECTOR(144 downto 0);  --debug
 			  pkt4_0 : out STD_LOGIC_VECTOR(144 downto 0);  --debug
 			  counter_o : out STD_LOGIC_VECTOR(3 downto 0); --debug
-			  ethertype_o : out STD_LOGIC(15 downto 0); --debug
-			  ethervalue_o : out STD_LOGIC(15 downto 0); --debug
+			  ethertype_o : out STD_LOGIC_vector(15 downto 0); --debug
+			  ethervalue_o : out STD_LOGIC_vector(15 downto 0); --debug
 			  counter_index : out integer range 0 to 15 := 0; --debug
 			  grantportint_o : out integer range 1 to 32;   --debug
 			  addlpointer_o : out integer range 0 to 479;   --debug
@@ -74,7 +74,7 @@ COMPONENT FIFO
 END COMPONENT;
 type arrayofinput is array(0 to 31) of std_logic_vector(143 downto 0);
 signal iData : arrayofinput := (others => (others => '0'));
-
+signal odatanew: std_logic_vector(144 downto 0);
 type overallstatus is (idle,iav,oav,reading);
 signal pstatus , nstatus : overallstatus := idle;
 type status is (r0,r1,r2,r3,r4,rcont,r0out,r1out,r2out,r3out,r4out,rjustover,rover);
@@ -335,7 +335,7 @@ case nstatus is
 					debug <= "0000000000000000";
 					dropped <= '0';
 					iRd_data <= "00000000000000000000000000000000";
-					input_port <= "00000000000000000000000000000000";
+					input_port <= "00000";
 					--currack <= '1';
 					--input_port <= "0000"; 
 	
