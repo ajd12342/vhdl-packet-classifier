@@ -7,10 +7,41 @@ USE ieee.numeric_std.ALL;
 entity classify_packet is
     Port ( iData_av : in  STD_LOGIC_VECTOR (32-1 downto 0);
            iRd_Data : out  STD_LOGIC_VECTOR (32-1 downto 0);
-           iData_in : in  STD_LOGIC_VECTOR (32*144-1 downto 0);
+           iData0 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData1 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData2 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData3 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData4 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData5 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData6 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData7 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData8 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData9 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData10 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData11 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData12 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData13 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData14 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData15 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData16 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData17 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData18 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData19 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData20 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData21 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData22 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData23 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData24 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData25 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData26 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData27 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData28 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData29 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData30 : in  STD_LOGIC_VECTOR (143 downto 0);
+			  iData31 : in  STD_LOGIC_VECTOR (143 downto 0);
            oData_av : out  STD_LOGIC;
 			  oData_rd : in STD_LOGIC;
-           oData : out  STD_LOGIC_VECTOR (143 downto 0); 
+           oData : out  STD_LOGIC_VECTOR (143 downto 0);
            MAC : in  STD_LOGIC_vector(47 downto 0);
 			  valid_in : in STD_LOGIC;
 			  valid_out : out std_logic;
@@ -79,7 +110,8 @@ type overallstatus is (idle,iav,oav,reading);
 signal pstatus , nstatus : overallstatus := idle;
 type status is (r0,r1,r2,r3,r4,rcont,r0out,r1out,r2out,r3out,r4out,rjustover,rover);
 signal preadstatus , nreadstatus : status := r0;
-signal currack , ready2push : std_logic := '0';
+signal currack :  std_logic := '1';
+signal ready2push : std_logic := '0';
 signal grantport : std_logic_vector(31 downto 0) := (others => '0');
 signal grantportint : integer range 0 to 31;
 
@@ -101,43 +133,45 @@ signal dropped : std_logic;
 signal ready2pushmodified: std_logic;
 signal isempty: std_logic;
 signal isfull: std_logic;
+signal arbitrst: std_logic;
 signal pkt0,pkt1,pkt2,pkt3,pkt4 : std_logic_vector(144 downto 0);
 --signal pktaddtmp : std_logic_vector(4 downto 0);
 
 begin
 -- Map input vector to the iData array
-iData(0) <= iData_in(1*144-1 downto 0*144);
-iData(1) <= iData_in(2*144-1 downto 1*144);
-iData(2) <= iData_in(3*144-1 downto 2*144);
-iData(3) <= iData_in(4*144-1 downto 3*144);
-iData(4) <= iData_in(5*144-1 downto 4*144);
-iData(5) <= iData_in(6*144-1 downto 5*144);
-iData(6) <= iData_in(7*144-1 downto 6*144);
-iData(7) <= iData_in(8*144-1 downto 7*144);
-iData(8) <= iData_in(9*144-1 downto 8*144);
-iData(9) <= iData_in(10*144-1 downto 9*144);
-iData(10) <= iData_in(11*144-1 downto 10*144);
-iData(11) <= iData_in(12*144-1 downto 11*144);
-iData(12) <= iData_in(13*144-1 downto 12*144);
-iData(13) <= iData_in(14*144-1 downto 13*144);
-iData(14) <= iData_in(15*144-1 downto 14*144);
-iData(15) <= iData_in(16*144-1 downto 15*144);
-iData(16) <= iData_in(17*144-1 downto 16*144);
-iData(17) <= iData_in(18*144-1 downto 17*144);
-iData(18) <= iData_in(19*144-1 downto 18*144);
-iData(19) <= iData_in(20*144-1 downto 19*144);
-iData(20) <= iData_in(21*144-1 downto 20*144);
-iData(21) <= iData_in(22*144-1 downto 21*144);
-iData(22) <= iData_in(23*144-1 downto 22*144);
-iData(23) <= iData_in(24*144-1 downto 23*144);
-iData(24) <= iData_in(25*144-1 downto 24*144);
-iData(25) <= iData_in(26*144-1 downto 25*144);
-iData(26) <= iData_in(27*144-1 downto 26*144);
-iData(27) <= iData_in(28*144-1 downto 27*144);
-iData(28) <= iData_in(29*144-1 downto 28*144);
-iData(29) <= iData_in(30*144-1 downto 29*144);
-iData(30) <= iData_in(31*144-1 downto 30*144);
-iData(31) <= iData_in(32*144-1 downto 31*144);
+iData(0) <= iData0;
+iData(1) <= iData1;
+iData(2) <= iData2;
+iData(3) <= iData3;
+iData(4) <= iData4;
+iData(5) <= iData5;
+iData(6) <= iData6;
+iData(7) <= iData7;
+iData(8) <= iData8;
+iData(9) <= iData9;
+iData(10) <= iData10;
+iData(11) <= iData11;
+iData(12) <= iData12;
+iData(13) <= iData13;
+iData(14) <= iData14;
+iData(15) <= iData15;
+iData(16) <= iData16;
+iData(17) <= iData17;
+iData(18) <= iData18;
+iData(19) <= iData19;
+iData(20) <= iData20;
+iData(21) <= iData21;
+iData(22) <= iData22;
+iData(23) <= iData23;
+iData(24) <= iData24;
+iData(25) <= iData25;
+iData(26) <= iData26;
+iData(27) <= iData27;
+iData(28) <= iData28;
+iData(29) <= iData29;
+iData(30) <= iData30;
+iData(31) <= iData31;
+
 
 
 -- Temp vars
@@ -145,6 +179,7 @@ ready2pushmodified<=ready2push and (not dropped);
 odata_av <= not isempty;
 odata <= odatanew(143 downto 0);
 valid_out <= odatanew(144);
+arbitrst <= rst or isfull;
 
 --OneHot2Bin 
 grantportint <= 
@@ -181,7 +216,7 @@ grantportint <=
 	30 when grantport = "01000000000000000000000000000000" else 
 	31 when grantport = "10000000000000000000000000000000";
 -- Main processes
-process(clk)
+process(rst,clk)
 begin
 	if(rising_edge(clk)) then
 		pstatus <= nstatus;
@@ -243,20 +278,16 @@ begin
 	end if;
 end process;
 
-process(clk)
+process(rst,clk)
 	begin
 		if(rising_edge(clk)) then
 			
 			case nstatus is
-				when idle => 
-					if isfull = '1' then
-						iRd_data <= "00000000000000000000000000000000";
-					else 
+				when idle =>  
 					case iData_av is                        --check if data available
 						when "00000000000000000000000000000000" => nstatus <= idle;
 						when others => nstatus <= iav;
 					end case;
-					end if;
 				when iav => nstatus <= oav;
 				when oav => 
 					nstatus <= reading;
@@ -288,18 +319,18 @@ process(clk)
 						when others => 
 					end case;
 			end case;
-		end if;
+	end if;
 end process;
 
 arbiter : rrarbiter 
 port map (clk => clk,
-			rst_n => rst,
+			rst_n => arbitrst,
 			req => iData_av,
 			ack => currack,
 			grant => grantport
 );
 
-process(clk)
+process(rst,clk)
 --variable code: std_logic_vector(grantportint' range);
 begin
 if (rising_edge(clk)) then	
@@ -321,7 +352,7 @@ if (rising_edge(clk)) then
 case nstatus is
 	when idle => case Core_ports is
 						when "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU" =>
-						Core_ports <= "11111111111111111111111111111111";
+						Core_ports <= "00000000000000000000000000000000";
 						when others => 
 					end case;
 					
@@ -333,13 +364,12 @@ case nstatus is
 					 
 					port_mask <= "00000000000000000000000000000000";
 					debug <= "0000000000000000";
+					iRd_Data <= "00000000000000000000000000000000";
 					dropped <= '0';
-					iRd_data <= "00000000000000000000000000000000";
-					input_port <= "00000";
 					--currack <= '1';
 					--input_port <= "0000"; 
 	
-	when iav => currack <= '1';
+	when iav => currack <= '0';
 		
 	when oav => 
 	iRd_data <= grantport;
@@ -445,7 +475,7 @@ case nstatus is
 			when rjustover =>
 				pkt0 <= '0'&"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 			when rover =>
-				currack <= '0';
+				currack <= '1';
 				ready2push <= '0';
 			when others => 
 		end case;
